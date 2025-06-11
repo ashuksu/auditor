@@ -32,7 +32,7 @@ document.getElementById('audit-form').addEventListener('submit', async (e) => {
         return;
     }
 
-    loader.style.display = 'block';
+    loader.style.display = 'grid';
     results.innerHTML = '';
 
     try {
@@ -52,15 +52,15 @@ document.getElementById('audit-form').addEventListener('submit', async (e) => {
 
         const table = document.createElement('table');
         table.innerHTML = `
-        <caption>Average Lighthouse Audit Results (3 passes)</caption>
+        <caption>Average Lighthouse Audit Results Lighthouse (3 passes)</caption>
         <thead>
           <tr>
             <th>URL</th>
             <th>Device</th>
-            <th>Perf. (± 3)</th>
-            <th>SEO (± 3)</th>
-            <th>Access. (± 3)</th>
-            <th>Best Practices (± 3)</th>
+            <th>Perf. (\u03bc ± \u03c3)</th>
+            <th>SEO (\u03bc ± \u03c3)</th>
+            <th>Access. (\u03bc ± \u03c3)</th>
+            <th>Best Practices (\u03bc ± \u03c3)</th>
             <th>FCP</th>
             <th>LCP</th>
             <th>TBT</th>

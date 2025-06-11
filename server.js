@@ -1,4 +1,3 @@
-// ====== server.js ======
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -23,6 +22,7 @@ async function loadLighthouse() {
 const baseConfig = {
     extends: 'lighthouse:default',
     settings: {
+        // throttlingMethod: 'simulate',
         throttlingMethod: 'provided',
         disableStorageReset: true,
         onlyCategories: ['performance', 'seo', 'accessibility', 'best-practices']
@@ -43,7 +43,7 @@ app.post('/audit', async (req, res) => {
             const metrics = {fcp: [], lcp: [], tbt: [], si: [], cls: []};
             const reportLinks = [];
 
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 3; i++) {
                 try {
                     const chrome = await chromeLauncher.launch({
                         chromeFlags: [
@@ -139,5 +139,5 @@ app.post('/audit', async (req, res) => {
 });
 
 app.listen(port, () => {
-    console.log(`Server listening on http://localhost:${port}`);
+    console.log(`Server listening on  http://localhost:${port}`);
 });

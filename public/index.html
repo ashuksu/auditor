@@ -2,19 +2,125 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8"/>
-	<title>Lighthouse Audit</title>
+	<title>Lighthouse Audit - Results</title>
 	<link rel="stylesheet" href="./style/style.css"/>
 	<script src="./script/main.js" async></script>
 </head>
 <body>
-<h1>Lighthouse Web Audit</h1>
+<div id="loader" class="loader" style="display: none">
+	<div class="dots-container">
+		<div class="dot"></div>
+		<div class="dot">
+			<div class="horns"></div>
+			<div class="face"></div>
+			<div class="mouth"></div>
+			<div class="eyes"></div>
+		</div>
+		<div class="dot"></div>
+	</div>
+</div>
+<h1>Audit Lighthouse Web</h1>
 <form id="audit-form">
-	<label>Enter URLs (one per line):</label><br/>
+	<label>Enter the URLs (one per line):</label><br/>
 	<textarea name="urls" placeholder="https://example.com"></textarea><br/>
 	<button type="submit">Start Audit</button>
 </form>
 
-<div id="loader" class="loader" style="display:none;">🕐 Audit in progress... Please wait.</div>
+<table>
+	<caption>
+		Average Lighthouse Audit Results (3 Passes)
+	</caption>
+	<thead>
+	<tr>
+		<th>URL</th>
+		<th>Device</th>
+		<th>Perf. (μ ± σ)</th>
+		<th>SEO (μ ± σ)</th>
+		<th>Access. (μ ± σ)</th>
+		<th>Best Practices (μ ± σ)</th>
+		<th>FCP</th>
+		<th>LCP</th>
+		<th>TBT</th>
+		<th>SI</th>
+		<th>CLS</th>
+		<th>Reports</th>
+	</tr>
+	</thead>
+	<tbody>
+	<tr>
+		<td>https://www.site.example.com</td>
+		<td>mobile</td>
+		<td>87.3% ± 4.5</td>
+		<td>100.0% ± 0.0</td>
+		<td>78.0% ± 0.0</td>
+		<td>67.0% ± 0.0</td>
+		<td>636 ms ± 470 ms</td>
+		<td>681 ms ± 457 ms</td>
+		<td>21 ms ± 15 ms</td>
+		<td>1.27 s ± 278 ms</td>
+		<td>0.276 ± 0.105</td>
+		<td>
+			<a
+				class="report-link"
+				href="/reports/report_1.html"
+				target="_blank">
+				Rapport 1
+			</a><br/>
+			<a
+				class="report-link"
+				href="/reports/report_2_mobile_2.html"
+				target="_blank"
+			>
+				Rapport 2
+			</a><br/>
+			<a
+				class="report-link"
+				href="/reports/report_3_mobile_3.html"
+				target="_blank"
+			>
+				Rapport 3
+			</a>
+		</td>
+	</tr>
+	<tr>
+		<td>https://www.site.example.com</td>
+		<td>desktop</td>
+		<td>93.0% ± 0.0</td>
+		<td>100.0% ± 0.0</td>
+		<td>85.0% ± 0.0</td>
+		<td>67.0% ± 0.0</td>
+		<td>312 ms ± 34 ms</td>
+		<td>387 ms ± 53 ms</td>
+		<td>7 ms ± 4 ms</td>
+		<td>4.88 s ± 8 ms</td>
+		<td>0.113 ± 0.001</td>
+		<td>
+			<a
+				class="report-link"
+				href="/reports/report_1.html"
+				target="_blank"
+			>
+				Rapport 1
+			</a><br/>
+			<a
+				class="report-link"
+				href="/reports/report_2_mobile_2.html"
+				target="_blank"
+			>
+				Rapport 2
+			</a><br/>
+			<a
+				class="report-link"
+				href="/reports/report_3_mobile_3.html"
+				target="_blank"
+			>
+				Rapport 3
+			</a>
+		</td>
+	</tr>
+	</tbody>
+</table>
+
 <div id="results"></div>
 </body>
 </html>
