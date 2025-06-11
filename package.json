@@ -1,0 +1,13 @@
+{
+  "name": "lighthouse-audit-web",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.0",
+    "lighthouse": "^10.0.0",
+    "chrome-launcher": "^0.15.0"
+  }
+}

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Lighthouse Audit</title>
+	<style>
+		body {
+			font-family: sans-serif;
+			padding: 2rem;
+		}
+
+		textarea {
+			width: 100%;
+			height: 150px;
+		}
+
+		iframe {
+			width: 100%;
+			height: 600px;
+			border: none;
+			margin-top: 1rem;
+		}
+	</style>
+</head>
+<body>
+<h1>Lighthouse Web Audit</h1>
+<form id="audit-form">
+	<label>Enter URLs (one per line)::</label><br>
+	<textarea name="urls"></textarea><br>
+	<button type="submit">Start Audit</button>
+</form>
+
+<div id="results"></div>
+<div id="loader" style="display:none; margin-top: 1rem;">
+	<p>🕐 Audit in progress... Please wait.</p>
+</div>
+
+<script>
+    document.getElementById('audit-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const textarea = e.target.elements.urls;
+        const urls = textarea.value.trim().split('\n').filter(Boolean);
+        const loader = document.getElementById('loader');
+        const results = document.getElementById('results');
+
+        if (!urls.length) {
+            alert('Please enter at least one URL.');
+            return;
+        }
+
+        // Show loader
+        loader.style.display = 'block';
+        results.innerHTML = '';
+
+        try {
+            const response = await fetch('/audit', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({urls})
+            });
+
+            const data = await response.json();
+
+            // Hide loader
+            loader.style.display = 'none';
+
+            if (!data.reports.length) {
+                results.innerHTML = '<p>No report generated.</p>';
+                return;
+            }
+
+            data.reports.forEach(report => {
+                const iframe = document.createElement('iframe');
+                iframe.src = report;
+                results.appendChild(iframe);
+            });
+        } catch (error) {
+            loader.style.display = 'none';
+            console.error('Error:', error);
+            alert("Error during audit. Check console.");
+        }
+    });
+</script>
+
+</body>
+</html>
