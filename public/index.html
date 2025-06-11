@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
+	<meta charset="UTF-8"/>
 	<title>Lighthouse Audit</title>
 	<style>
 		body {
 			font-family: sans-serif;
 			padding: 2rem;
+			max-width: 900px;
+			margin: auto;
 		}
 
 		textarea {
@@ -14,28 +16,63 @@
 			height: 150px;
 		}
 
-		iframe {
+		table {
 			width: 100%;
-			height: 600px;
-			border: none;
+			border-collapse: collapse;
 			margin-top: 1rem;
+		}
+
+		th, td {
+			border: 1px solid #ddd;
+			padding: 0.5rem;
+			text-align: center;
+		}
+
+		th {
+			background: #f5f5f5;
+		}
+
+		caption {
+			font-weight: bold;
+			margin-top: 1.5rem;
+			margin-bottom: 0.5rem;
+			font-size: 1.1rem;
+		}
+
+		.loader {
+			margin-top: 1rem;
+			font-style: italic;
+		}
+
+		a.report-link {
+			color: #0366d6;
+			text-decoration: none;
 		}
 	</style>
 </head>
 <body>
 <h1>Lighthouse Web Audit</h1>
 <form id="audit-form">
-	<label>Enter URLs (one per line)::</label><br>
-	<textarea name="urls"></textarea><br>
+	<label>Enter URLs (one per line):</label><br/>
+	<textarea name="urls" placeholder="https://example.com"></textarea><br/>
 	<button type="submit">Start Audit</button>
 </form>
 
+<div id="loader" class="loader" style="display:none;">🕐 Audit in progress... Please wait.</div>
 <div id="results"></div>
-<div id="loader" style="display:none; margin-top: 1rem;">
-	<p>🕐 Audit in progress... Please wait.</p>
-</div>
 
 <script>
+    function formatMs(ms) {
+        if (ms == null || isNaN(ms)) return '—';
+        if (ms > 1000) return (ms / 1000).toFixed(2) + ' s';
+        return Math.round(ms) + ' ms';
+    }
+
+    function formatCls(value) {
+        if (value == null || isNaN(value)) return '—';
+        return value.toFixed(3);
+    }
+
     document.getElementById('audit-form').addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -49,7 +86,6 @@
             return;
         }
 
-        // Show loader
         loader.style.display = 'block';
         results.innerHTML = '';
 
@@ -61,24 +97,67 @@
             });
 
             const data = await response.json();
-
-            // Hide loader
             loader.style.display = 'none';
 
-            if (!data.reports.length) {
-                results.innerHTML = '<p>No report generated.</p>';
+            if (!data.results || data.results.length === 0) {
+                results.innerHTML = '<p>No audit results available.</p>';
                 return;
             }
 
-            data.reports.forEach(report => {
-                const iframe = document.createElement('iframe');
-                iframe.src = report;
-                results.appendChild(iframe);
+            // Table Creation
+            const table = document.createElement('table');
+            table.innerHTML = `
+				<caption>Average Lighthouse Audit Results (3 passes)</caption>
+				<thead>
+					<tr>
+						<th>URL</th>
+						<th>Performance</th>
+						<th>SEO</th>
+						<th>Accessibility</th>
+						<th>Best Practices</th>
+						<th>FCP</th>
+						<th>LCP</th>
+						<th>TBT</th>
+						<th>Speed Index</th>
+						<th>CLS</th>
+						<th>Reports</th>
+					</tr>
+				</thead>
+				<tbody></tbody>
+			`;
+
+            const tbody = table.querySelector('tbody');
+
+            data.results.forEach(item => {
+                const tr = document.createElement('tr');
+
+                // Format des rapports en liens cliquables
+                const reportsLinks = item.reports
+                    .map((r, i) => `<a class="report-link" href="${r}" target="_blank" rel="noopener noreferrer">Rapport ${i + 1}</a>`)
+                    .join('<br>');
+
+                tr.innerHTML = `
+            <td>${item.url}</td>
+            <td>${item.averageScores.performance.toFixed(1)}%</td>
+            <td>${item.averageScores.seo.toFixed(1)}%</td>
+            <td>${item.averageScores.accessibility.toFixed(1)}%</td>
+            <td>${item.averageScores.bestPractices.toFixed(1)}%</td>
+            <td>${formatMs(item.averageMetrics.fcp)}</td>
+            <td>${formatMs(item.averageMetrics.lcp)}</td>
+            <td>${formatMs(item.averageMetrics.tbt)}</td>
+            <td>${formatMs(item.averageMetrics.si)}</td>
+            <td>${formatCls(item.averageMetrics.cls)}</td>
+            <td>${reportsLinks}</td>
+          `;
+
+                tbody.appendChild(tr);
             });
+
+            results.appendChild(table);
         } catch (error) {
             loader.style.display = 'none';
             console.error('Error:', error);
-            alert("Error during audit. Check console.");
+            alert("Error during audit. Check the console.");
         }
     });
 </script>
