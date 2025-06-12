@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loader = document.getElementById('loader');
     const resultsContainer = document.getElementById('results-container');
     const errorContainer = document.getElementById('error-container');
+    const CLIENT_TIMEOUT = 330000; // 5.5 minutes
 
     const formatMs = (ms) => {
         if (ms === null || isNaN(ms)) return '—';
@@ -43,13 +44,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         loader.style.display = 'grid';
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), CLIENT_TIMEOUT);
 
         try {
             const response = await fetch('/audit', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({urls}),
+                signal: controller.signal, // Link controller to the fetch request
             });
+
+            clearTimeout(timeoutId); // Clear timeout if the request succeeds
 
             const data = await response.json();
 
@@ -65,10 +71,16 @@ document.addEventListener('DOMContentLoaded', () => {
             renderTable(data.results);
 
         } catch (error) {
-            console.error('Error:', error);
-            displayError(`Error during audit: ${error.message}`);
+            if (error.name === 'AbortError') {
+                console.error('Fetch aborted due to timeout.');
+                displayError('Request timed out. The server took too long to respond.');
+            } else {
+                console.error('Error:', error);
+                displayError(`Error during audit: ${error.message}`);
+            }
         } finally {
             loader.style.display = 'none';
+            clearTimeout(timeoutId);
         }
     });
 
