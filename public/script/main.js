@@ -1,112 +1,126 @@
-function formatMs(ms) {
-    if (ms === null || isNaN(ms)) return '—';
-    return ms > 1000 ? (ms / 1000).toFixed(2) + ' s' : Math.round(ms) + ' ms';
-}
-
-function formatCls(value) {
-    if (value == null || isNaN(value)) return '—';
-    return value.toFixed(3);
-}
-
-document.getElementById('audit-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const textarea = e.target.elements.urls;
-    const urls = textarea.value
-        .trim()
-        .split('\n')
-        .filter(Boolean)
-        .map(line => {
-            let url = line.trim();
-            if (!/^https?:\/\//i.test(url)) {
-                url = 'https://' + url;
-            }
-            return url;
-        });
-
+document.addEventListener('DOMContentLoaded', () => {
+    const auditForm = document.getElementById('audit-form');
     const loader = document.getElementById('loader');
-    const results = document.getElementById('results');
+    const resultsContainer = document.getElementById('results-container');
+    const errorContainer = document.getElementById('error-container');
 
-    if (!urls.length) {
-        alert('Please enter at least one URL.');
-        return;
-    }
+    const formatMs = (ms) => {
+        if (ms === null || isNaN(ms)) return '—';
+        return ms > 1000 ? `${(ms / 1000).toFixed(2)} s` : `${Math.round(ms)} ms`;
+    };
 
-    loader.style.display = 'grid';
-    results.innerHTML = '';
+    const formatCls = (value) => {
+        if (value === null || isNaN(value)) return '—';
+        return value.toFixed(3);
+    };
 
-    try {
-        const response = await fetch('/audit', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({urls})
-        });
+    const displayError = (message) => {
+        errorContainer.textContent = message;
+        errorContainer.style.display = 'block';
+    };
 
-        const data = await response.json();
-        loader.style.display = 'none';
+    const clearResultsAndErrors = () => {
+        resultsContainer.innerHTML = '';
+        errorContainer.innerHTML = '';
+        errorContainer.style.display = 'none';
+    };
 
-        if (!data.results || data.results.length === 0) {
-            results.innerHTML = '<p>No audit results available.</p>';
+    auditForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearResultsAndErrors();
+
+        const textarea = e.target.elements.urls;
+        const urls = textarea.value
+            .trim()
+            .split('\n')
+            .map(line => line.trim())
+            .filter(Boolean)
+            .map(url => !/^https?:\/\//i.test(url) ? `https://${url}` : url);
+
+        if (!urls.length) {
+            displayError('Please enter at least one URL.');
             return;
         }
 
+        loader.style.display = 'grid';
+
+        try {
+            const response = await fetch('/audit', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({urls}),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'An unknown error occurred.');
+            }
+
+            if (!data.results || data.results.length === 0) {
+                displayError('No audit results were returned from the server.');
+                return;
+            }
+
+            renderTable(data.results);
+
+        } catch (error) {
+            console.error('Error:', error);
+            displayError(`Error during audit: ${error.message}`);
+        } finally {
+            loader.style.display = 'none';
+        }
+    });
+
+    function renderTable(data) {
         const table = document.createElement('table');
         table.innerHTML = `
-        <caption>Average Lighthouse Audit Results Lighthouse (3 passes)</caption>
-        <thead>
-          <tr>
-            <th>URL</th>
-            <th>Device</th>
-            <th>Perf. (\u03bc ± \u03c3)</th>
-            <th>SEO (\u03bc ± \u03c3)</th>
-            <th>Access. (\u03bc ± \u03c3)</th>
-            <th>Best Practices (\u03bc ± \u03c3)</th>
-            <th>FCP</th>
-            <th>LCP</th>
-            <th>TBT</th>
-            <th>SI</th>
-            <th>CLS</th>
-            <th>Reports</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      `;
+            <caption>Average Lighthouse Audit Results (3 passes)</caption>
+            <thead>
+                <tr>
+                    <th>URL</th>
+                    <th>Device</th>
+                    <th>Perf. (μ ± σ)</th>
+                    <th>SEO (μ ± σ)</th>
+                    <th>Access. (μ ± σ)</th>
+                    <th>Best Practices (μ ± σ)</th>
+                    <th>FCP</th>
+                    <th>LCP</th>
+                    <th>TBT</th>
+                    <th>SI</th>
+                    <th>CLS</th>
+                    <th>Reports</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        `;
 
         const tbody = table.querySelector('tbody');
-
         const fmtScore = (mean, std) => `${mean.toFixed(1)}% ± ${std.toFixed(1)}`;
 
-        data.results.forEach(item => {
-            console.log(item)
-
+        data.forEach(item => {
             const tr = document.createElement('tr');
-
             const reportsLinks = item.reports
-                .map((r, i) => `<a class="report-link" href="${r}" target="_blank">Rapport ${i + 1}</a>`)
+                .map((r, i) => `<a class="report-link" href="${r}" target="_blank">Report ${i + 1}</a>`)
                 .join('<br>');
 
             tr.innerHTML = `
-          <td>${item.url}</td>
-          <td>${item.device}</td>
-          <td>${fmtScore(item.averageScores.performance, item.stdScores.performance)}</td>
-          <td>${fmtScore(item.averageScores.seo, item.stdScores.seo)}</td>
-          <td>${fmtScore(item.averageScores.accessibility, item.stdScores.accessibility)}</td>
-          <td>${fmtScore(item.averageScores.bestPractices, item.stdScores.bestPractices)}</td>
-          <td>${formatMs(item.averageMetrics.fcp)} ± ${formatMs(item.stdMetrics.fcp)}</td>
-          <td>${formatMs(item.averageMetrics.lcp)} ± ${formatMs(item.stdMetrics.lcp)}</td>
-          <td>${formatMs(item.averageMetrics.tbt)} ± ${formatMs(item.stdMetrics.tbt)}</td>
-          <td>${formatMs(item.averageMetrics.si)} ± ${formatMs(item.stdMetrics.si)}</td>
-          <td>${formatCls(item.averageMetrics.cls)} ± ${formatCls(item.stdMetrics.cls)}</td>
-          <td>${reportsLinks}</td>
-        `;
-
+                <td>${item.url}</td>
+                <td>${item.device}</td>
+                <td>${fmtScore(item.averageScores.performance, item.stdScores.performance)}</td>
+                <td>${fmtScore(item.averageScores.seo, item.stdScores.seo)}</td>
+                <td>${fmtScore(item.averageScores.accessibility, item.stdScores.accessibility)}</td>
+                <td>${fmtScore(item.averageScores.bestPractices, item.stdScores.bestPractices)}</td>
+                <td>${formatMs(item.averageMetrics.fcp)} ± ${formatMs(item.stdMetrics.fcp)}</td>
+                <td>${formatMs(item.averageMetrics.lcp)} ± ${formatMs(item.stdMetrics.lcp)}</td>
+                <td>${formatMs(item.averageMetrics.tbt)} ± ${formatMs(item.stdMetrics.tbt)}</td>
+                <td>${formatMs(item.averageMetrics.si)} ± ${formatMs(item.stdMetrics.si)}</td>
+                <td>${formatCls(item.averageMetrics.cls)} ± ${formatCls(item.stdMetrics.cls)}</td>
+                <td>${reportsLinks}</td>
+            `;
             tbody.appendChild(tr);
         });
 
-        results.appendChild(table);
-    } catch (error) {
-        loader.style.display = 'none';
-        console.error('Error:', error);
-        alert("Error during audit. Check the console.");
+        resultsContainer.appendChild(table);
     }
 });
